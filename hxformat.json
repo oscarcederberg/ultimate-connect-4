@@ -21,8 +21,5 @@
   "indentation": {
     "character": "    ",
     "indentCaseLabels": false
-  },
-  "wrapping": {
-    "maxLineLength": 80
   }
 }
