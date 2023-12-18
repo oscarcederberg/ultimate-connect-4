@@ -1,15 +1,28 @@
 {
-	"lineEnds": {
-		"leftCurly": "both",
-		"rightCurly": "both",
-		"objectLiteralCurly": {
-			"leftCurly": "after"
-		}
-	},
-	"sameLine": {
-		"ifElse": "next",
-		"doWhile": "next",
-		"tryBody": "next",
-		"tryCatch": "next"
-	}
+  "lineEnds": {
+    "leftCurly": "after",
+    "rightCurly": "both",
+    "objectLiteralCurly": {
+      "leftCurly": "after"
+    },
+    "emptyCurly": "noBreak"
+  },
+  "sameLine": {
+    "ifBody": "same",
+    "elseBody": "same",
+    "ifElse": "same",
+    "elseIf": "same",
+    "expressionIf": "same",
+    "expressionIfWithBlocks": false,
+    "doWhile": "same",
+    "tryBody": "same",
+    "tryCatch": "next"
+  },
+  "indentation": {
+    "character": "    ",
+    "indentCaseLabels": false
+  },
+  "wrapping": {
+    "maxLineLength": 80
+  }
 }
