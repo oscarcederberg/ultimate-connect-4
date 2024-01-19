@@ -6,8 +6,8 @@ import flixel.FlxSprite;
 class AttachableSprite extends FlxSprite implements Attachable {
     var attached:Bool;
     var parent:FlxObject;
-    var relativeX:Int;
-    var relativeY:Int;
+    var relativeX:Float;
+    var relativeY:Float;
 
     override function update(elapsed:Float) {
         super.update(elapsed);
@@ -15,7 +15,7 @@ class AttachableSprite extends FlxSprite implements Attachable {
         updateAttachment();
     }
 
-    public function attach(parent:FlxObject, x:Int, y:Int) {
+    public function attach(parent:FlxObject, x:Float, y:Float) {
         this.parent = parent;
         this.relativeX = x;
         this.relativeY = y;
