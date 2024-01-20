@@ -4,6 +4,11 @@ import GameModel.BoardModel;
 import flixel.FlxSprite;
 import flixel.FlxState;
 
+enum PlayerType {
+    Human;
+    Computer;
+}
+
 class Highlight extends FlxSprite {
     override public function new(x:Float, y:Float) {
         super(x, y);
@@ -28,6 +33,8 @@ class PlayerTurnMarker extends FlxSprite {
 
 class PlayState extends FlxState {
     var gameModel:GameModel = new GameModel();
+    var bluePlayerType:PlayerType;
+    var redPlayerType:PlayerType;
     var alphaBoards:Array<AlphaBoard> = [for (board in 0...BoardModel.COLS) null];
     var omegaBoard:OmegaBoard;
     var highlights:Array<Highlight> = [for (board in 0...BoardModel.COLS) null];
@@ -36,6 +43,9 @@ class PlayState extends FlxState {
 
     override public function create() {
         super.create();
+
+        bluePlayerType = Computer;
+        redPlayerType = Computer;
 
         for (index in 0...BoardModel.COLS) {
             this.highlights[index] = new Highlight(37 + (index * 82) - 2, 48 - 9);
@@ -55,6 +65,10 @@ class PlayState extends FlxState {
 
         playerTurnMarker = new PlayerTurnMarker(544, 432);
         add(playerTurnMarker);
+
+        if (bluePlayerType == Computer) {
+            ComputerPlayer.generateMove(this, gameModel);
+        }
     }
 
     override public function update(elapsed:Float) {
@@ -66,13 +80,14 @@ class PlayState extends FlxState {
 
         switch gameModel.makeMove(index, column) {
         case Fail:
-            // Do nothing
+            return;
         case Ok(index, row, column):
             switch index {
             case Alpha(index):
                 alphaBoards[index].setPiece(row, column, player);
             case Omega:
                 trace('ERROR: gameModel.makeMove returned `Ok($index, $row, $column)`');
+                return;
             }
         case AlphaTie(index, row, column):
             switch index {
@@ -80,6 +95,7 @@ class PlayState extends FlxState {
                 alphaBoards[index].resetPieces();
             case Omega:
                 trace('ERROR: gameModel.makeMove returned `AlphaTie($index, $row, $column)`');
+                return;
             }
         case OmegaTie(omegaRow, omegaColumn, index, row, column):
             switch index {
@@ -87,8 +103,10 @@ class PlayState extends FlxState {
                 alphaBoards[index].resetPieces();
                 omegaBoard.setPiece(omegaRow, omegaColumn, player);
                 trace("Tie!");
+                return;
             case Omega:
                 trace('ERROR: gameModel.makeMove returned `OmegaTie($index, $row, $column)`');
+                return;
             }
         case AlphaWin(omegaRow, omegaColumn, index, row, column):
             switch index {
@@ -97,15 +115,18 @@ class PlayState extends FlxState {
                 omegaBoard.setPiece(omegaRow, omegaColumn, player);
             case Omega:
                 trace('ERROR: gameModel.makeMove returned `AlphaWin($index, $row, $column)`');
+                return;
             }
         case OmegaWin(omegaRow, omegaColumn, index, row, column):
             switch index {
             case Alpha(index):
                 alphaBoards[index].resetPieces();
                 omegaBoard.setPiece(omegaRow, omegaColumn, player);
-                trace('${player.getName} wins!');
+                trace('${player.getName()} wins!');
+                return;
             case Omega:
                 trace('ERROR: gameModel.makeMove returned `OmegaWin($index, $row, $column)`');
+                return;
             }
         }
 
@@ -124,8 +145,14 @@ class PlayState extends FlxState {
         switch gameModel.getCurrentTurn() {
         case Blue:
             playerTurnMarker.animation.play("blue");
+            if (bluePlayerType == Computer) {
+                ComputerPlayer.generateMove(this, gameModel);
+            }
         case Red:
             playerTurnMarker.animation.play("red");
+            if (redPlayerType == Computer) {
+                ComputerPlayer.generateMove(this, gameModel);
+            }
         }
     }
 }
