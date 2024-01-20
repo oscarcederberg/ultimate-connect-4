@@ -2,6 +2,7 @@ import GameModel.BoardModel;
 import GameModel.GameTurn;
 import flixel.FlxG;
 import flixel.FlxSprite;
+import haxe.ds.Option;
 import utils.Hitbox;
 
 class AlphaBoardPiece extends FlxSprite {
@@ -66,15 +67,16 @@ class AlphaBoard extends FlxSprite {
         for (hitbox in columnHitboxes) {
             hitbox.update(elapsed);
         }
+    }
 
+    public function checkInteraction():Option<Int> {
         for (hitbox in columnHitboxes) {
-            if (hitbox.overlapsPoint(FlxG.mouse.getPosition())) {
-                if (FlxG.mouse.justPressed) {
-                    parent.makeMove(index, hitbox.getIndex());
-                }
-                break;
+            if (FlxG.mouse.justPressed && hitbox.overlapsPoint(FlxG.mouse.getPosition())) {
+                return Some(hitbox.getIndex());
             }
         }
+
+        return None;
     }
 
     public function resetPieces() {
@@ -91,5 +93,9 @@ class AlphaBoard extends FlxSprite {
     public function setPiece(row:Int, column:Int, player:GameTurn) {
         pieces[row][column] = new AlphaBoardPiece(x + (column * COLUMN_WIDTH) + COLUMN_OFFSET, y + (row * COLUMN_WIDTH), player);
         parent.add(pieces[row][column]);
+    }
+
+    public function getIndex():Int {
+        return index;
     }
 }

@@ -7,7 +7,7 @@ class ComputerPlayer {
         var random = new FlxRandom();
         var timer = new FlxTimer();
 
-        timer.start(random.float(0.1, 0.3), _ -> {
+        timer.start(random.float(0.01, 0.1), _ -> {
             var type = model.getCurrentTurnType();
             var boardIndex:Int = -1;
             var board:Array<Array<BoardSlotType>>;

@@ -1,12 +1,20 @@
 package;
 
 import GameModel.BoardModel;
+import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxState;
+import flixel.util.FlxTimer;
 
 enum PlayerType {
     Human;
     Computer;
+}
+
+enum GameResult {
+    BlueWin;
+    RedWin;
+    Tie;
 }
 
 class Highlight extends FlxSprite {
@@ -27,7 +35,27 @@ class PlayerTurnMarker extends FlxSprite {
         loadGraphic("assets/images/player_turn.png", true, 96, 48);
         animation.add("blue", [0]);
         animation.add("red", [1]);
-        animation.play("on");
+        animation.play("blue");
+    }
+}
+
+class GameResultMarker extends FlxSprite {
+    override public function new(x:Float, y:Float, result:GameResult) {
+        super(x, y);
+
+        loadGraphic("assets/images/game_result_marker.png", true, 416, 192);
+        animation.add("blue_win", [0]);
+        animation.add("red_win", [1]);
+        animation.add("tie", [2]);
+
+        switch result {
+        case BlueWin:
+            animation.play("blue_win");
+        case RedWin:
+            animation.play("red_win");
+        case Tie:
+            animation.play("tie");
+        }
     }
 }
 
@@ -40,6 +68,8 @@ class PlayState extends FlxState {
     var highlights:Array<Highlight> = [for (board in 0...BoardModel.COLS) null];
     var omegaMarker:FlxSprite;
     var playerTurnMarker:PlayerTurnMarker;
+    var gameResultMarker:GameResultMarker;
+    var finished:Bool = false;
 
     override public function create() {
         super.create();
@@ -75,6 +105,24 @@ class PlayState extends FlxState {
         super.update(elapsed);
     }
 
+    private function checkInteraction() {
+        var player = gameModel.getCurrentTurn();
+
+        if (!finished
+            && FlxG.mouse.justPressed
+            && (player == Blue && bluePlayerType == Human)
+            || (player == Red && redPlayerType == Human)) {
+            for (board in alphaBoards) {
+                switch board.checkInteraction() {
+                case Some(column):
+                    makeMove(board.getIndex(), column);
+                    break;
+                case None:
+                }
+            }
+        }
+    }
+
     public function makeMove(index:Int, column:Int) {
         var player = gameModel.getCurrentTurn();
 
@@ -103,6 +151,7 @@ class PlayState extends FlxState {
                 alphaBoards[index].resetPieces();
                 omegaBoard.setPiece(omegaRow, omegaColumn, player);
                 trace("Tie!");
+                endGame(Tie);
                 return;
             case Omega:
                 trace('ERROR: gameModel.makeMove returned `OmegaTie($index, $row, $column)`');
@@ -123,6 +172,12 @@ class PlayState extends FlxState {
                 alphaBoards[index].resetPieces();
                 omegaBoard.setPiece(omegaRow, omegaColumn, player);
                 trace('${player.getName()} wins!');
+                endGame(switch player {
+                case Blue:
+                    BlueWin;
+                case Red:
+                    RedWin;
+                });
                 return;
             case Omega:
                 trace('ERROR: gameModel.makeMove returned `OmegaWin($index, $row, $column)`');
@@ -154,5 +209,21 @@ class PlayState extends FlxState {
                 ComputerPlayer.generateMove(this, gameModel);
             }
         }
+    }
+
+    private function endGame(result:GameResult) {
+        for (highlight in highlights) {
+            highlight.animation.play("off");
+        }
+
+        playerTurnMarker.destroy();
+
+        gameResultMarker = new GameResultMarker(112, 144, result);
+        add(gameResultMarker);
+
+        var timer = new FlxTimer();
+        timer.start(2, _ -> {
+            FlxG.resetState();
+        });
     }
 }

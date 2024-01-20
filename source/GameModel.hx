@@ -219,13 +219,13 @@ class GameModel {
             return AlphaTie(index, row, column);
         case Win(index, row, column):
             currentTurnType = Any;
-            switchTurn();
 
             switch omegaBoard.makeMove(currentTurn, boardIndex) {
             case Fail:
                 trace('ERROR: Alpha: `Win($index, $row, $column)`, lead to Omega: `Fail`');
                 return Fail;
             case Ok(_, omegaRow, omegaColumn):
+                switchTurn();
                 return AlphaWin(omegaRow, omegaColumn, index, row, column);
             case Tie(_, omegaRow, omegaColumn):
                 return OmegaTie(omegaRow, omegaColumn, index, row, column);
