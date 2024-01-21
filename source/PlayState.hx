@@ -74,7 +74,7 @@ class PlayState extends FlxState {
     override public function create() {
         super.create();
 
-        bluePlayerType = Computer;
+        bluePlayerType = Human;
         redPlayerType = Computer;
 
         for (index in 0...BoardModel.COLS) {
@@ -96,6 +96,7 @@ class PlayState extends FlxState {
         playerTurnMarker = new PlayerTurnMarker(544, 432);
         add(playerTurnMarker);
 
+        FlxG.autoPause = false;
         if (bluePlayerType == Computer) {
             ComputerPlayer.generateMove(this, gameModel);
         }
@@ -103,6 +104,8 @@ class PlayState extends FlxState {
 
     override public function update(elapsed:Float) {
         super.update(elapsed);
+
+        checkInteraction();
     }
 
     private function checkInteraction() {
@@ -113,6 +116,10 @@ class PlayState extends FlxState {
             && (player == Blue && bluePlayerType == Human)
             || (player == Red && redPlayerType == Human)) {
             for (board in alphaBoards) {
+                if (!gameModel.getAvailableAlphaBoards().contains(board.getIndex())) {
+                    continue;
+                }
+
                 switch board.checkInteraction() {
                 case Some(column):
                     makeMove(board.getIndex(), column);
@@ -185,15 +192,11 @@ class PlayState extends FlxState {
             }
         }
 
-        switch gameModel.getCurrentTurnType() {
-        case Any:
-            for (highlight in highlights) {
-                highlight.animation.play("on");
-            }
-        case Board(index):
-            for (highlight in highlights) {
-                highlight.animation.play("off");
-            }
+        for (highlight in highlights) {
+            highlight.animation.play("off");
+        }
+
+        for (index in gameModel.getAvailableAlphaBoards()) {
             highlights[index].animation.play("on");
         }
 
@@ -222,7 +225,7 @@ class PlayState extends FlxState {
         add(gameResultMarker);
 
         var timer = new FlxTimer();
-        timer.start(2, _ -> {
+        timer.start(1, _ -> {
             FlxG.resetState();
         });
     }

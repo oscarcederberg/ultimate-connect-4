@@ -16,11 +16,6 @@ enum GameTurn {
     Red;
 }
 
-enum GameTurnType {
-    Any;
-    Board(index:Int);
-}
-
 enum BoardMoveResult {
     Fail;
     Ok(index:BoardIndex, row:Int, column:Int);
@@ -53,6 +48,18 @@ class BoardModel {
 
     public function new(index:BoardIndex) {
         this.index = index;
+    }
+
+    public function getAvailableColumns():Array<Int> {
+        var array:Array<Int> = [];
+
+        for (column in 0...COLS) {
+            if (slots[0][column] == Empty) {
+                array.push(column);
+            }
+        }
+
+        return array;
     }
 
     public function getSlots() {
@@ -161,16 +168,22 @@ class GameModel {
     private var alphaBoards:Array<BoardModel> = [for (board in 0...BOARDS) new BoardModel(Alpha(board))];
     private var omegaBoard:BoardModel = new BoardModel(Omega);
     private var currentTurn:GameTurn = Blue;
-    private var currentTurnType:GameTurnType = Any;
+    private var availableAlphaBoards:Array<Int>;
 
-    public function new() {}
+    public function new() {
+        availableAlphaBoards = calculateAvailableAlphaBoard();
+    }
 
     public function getCurrentTurn():GameTurn {
         return currentTurn;
     }
 
-    public function getCurrentTurnType():GameTurnType {
-        return currentTurnType;
+    public function getAvailableAlphaBoards():Array<Int> {
+        return availableAlphaBoards;
+    }
+
+    public function getAvailableColumsInAlphaBoard(index:Int):Array<Int> {
+        return alphaBoards[index].getAvailableColumns();
     }
 
     public function getAlphaBoard(boardIndex:Int):Array<Array<BoardSlotType>> {
@@ -184,22 +197,14 @@ class GameModel {
     public function makeMove(boardIndex:Int, column:Int):GameMoveResult {
         if (boardIndex < 0 || boardIndex >= BOARDS) {
             trace('boardIndex: $boardIndex out of range');
+
             return Fail;
         }
 
-        switch currentTurnType {
-        case Any:
-            // Skip
-        case Board(index):
-            if (index != boardIndex) {
-                trace('`boardIndex`: $boardIndex not equal to currentTurnType: `Board($index)`');
-                return Fail;
-            }
+        if (!availableAlphaBoards.contains(boardIndex)) {
+            trace('`availableAlphaBoards`: $availableAlphaBoards does not contain `boardIndex`: $boardIndex');
 
-            if (omegaBoard.getSlots()[0][index] != Empty) {
-                trace('`omegaBoard[0][$index] != `Empty`, was `${omegaBoard.getSlots()[0][index]}`');
-                return Fail;
-            }
+            return Fail;
         }
 
         switch alphaBoards[boardIndex].makeMove(currentTurn, column) {
@@ -208,31 +213,60 @@ class GameModel {
 
             return Fail;
         case Ok(index, row, column):
-            currentTurnType = Board(column);
+            availableAlphaBoards = calculateAvailableAlphaBoardFromIndex(column);
             switchTurn();
 
             return Ok(index, row, column);
         case Tie(index, row, colum):
-            currentTurnType = Board(column);
+            availableAlphaBoards = calculateAvailableAlphaBoardFromIndex(column);
             switchTurn();
 
             return AlphaTie(index, row, column);
         case Win(index, row, column):
-            currentTurnType = Any;
-
             switch omegaBoard.makeMove(currentTurn, boardIndex) {
             case Fail:
                 trace('ERROR: Alpha: `Win($index, $row, $column)`, lead to Omega: `Fail`');
+
                 return Fail;
             case Ok(_, omegaRow, omegaColumn):
+                availableAlphaBoards = calculateAvailableAlphaBoard();
                 switchTurn();
+
                 return AlphaWin(omegaRow, omegaColumn, index, row, column);
             case Tie(_, omegaRow, omegaColumn):
+                availableAlphaBoards = [];
+
                 return OmegaTie(omegaRow, omegaColumn, index, row, column);
             case Win(_, omegaRow, omegaColumn):
+                availableAlphaBoards = [];
+
                 return OmegaWin(omegaRow, omegaColumn, index, row, column);
             }
         }
+    }
+
+    private function calculateAvailableAlphaBoard():Array<Int> {
+        var array:Array<Int> = [];
+
+        for (column in 0...BoardModel.COLS) {
+            if (omegaBoard.getSlots()[0][column] == Empty) {
+                array.push(column);
+            }
+        }
+
+        return array;
+    }
+
+    private function calculateAvailableAlphaBoardFromIndex(index:Int):Array<Int> {
+        var array:Array<Int> = [];
+
+        if (omegaBoard.getSlots()[0][index] == Empty) {
+            array = [index];
+        } else {
+            array = calculateAvailableAlphaBoard();
+        }
+
+        return array;
     }
 
     private function switchTurn() {
