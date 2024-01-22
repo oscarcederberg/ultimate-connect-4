@@ -4,9 +4,13 @@ import flixel.util.FlxTimer;
 class ComputerPlayer {
     static public function generateMove(state:PlayState, model:GameModel) {
         var random = new FlxRandom();
-        var boardIndex = random.getObject(model.getAvailableAlphaBoards());
-        var column = random.getObject(model.getAvailableColumsInAlphaBoard(boardIndex));
+        var timer = new FlxTimer();
 
-        state.makeMove(boardIndex, column);
+        timer.start(random.float(0.01, 0.02), _ -> {
+            var boardIndex = random.getObject(model.getAvailableAlphaBoards());
+            var column = random.getObject(model.getAvailableColumsInAlphaBoard(boardIndex));
+
+            state.makeMove(boardIndex, column);
+        });
     }
 }
