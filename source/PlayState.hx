@@ -74,7 +74,7 @@ class PlayState extends FlxState {
     override public function create() {
         super.create();
 
-        bluePlayerType = Human;
+        bluePlayerType = Computer;
         redPlayerType = Computer;
 
         for (index in 0...BoardModel.COLS) {
@@ -225,7 +225,7 @@ class PlayState extends FlxState {
         add(gameResultMarker);
 
         var timer = new FlxTimer();
-        timer.start(1, _ -> {
+        timer.start(5, _ -> {
             FlxG.resetState();
         });
     }
